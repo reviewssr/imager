@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片展示网站</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>图片展示网站</h1>
+    <nav>
+      <a href="/">主页</a>
+      <a href="/gallery">图片库</a>
+      <a href="/upload">上传图片</a>
+      <a href="/profile">用户资料</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="upload">
+      <h2>上传图片</h2>
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="image" multiple>
+        <input type="submit" value="上传">
+      </form>
+    </section>
+
+    <section>
+      <div id="images"></div>
+      <div class="button-container">
+        <button id="select-button">选中</button>
+        <button id="delete-button">删除图片</button>
+        <button id="delete-duplicate-button">删除多余的相同文件</button>
+      </div>
+      <div id="modal" style="display: none;">
+        <div id="modal-overlay"></div>
+        <img id="modal-img">
+        <a id="previous-button" href="#"><span></span></a>
+        <a id="next-button" href="#"><span></span></a>
+        <button id="modal-delete-button">关闭</button>
+      </div>
+    </section>
+  </main>
+  <!-- Toast 容器 -->
+  <div id="toast-container"></div>
+  <div class="pagination">
+    <button id="prev-page-button" disabled>上一页</button>
+    <span id="current-page">1</span>
+    <span>/</span>
+    <span id="total-pages">1</span>
+    <button id="next-page-button">下一页</button>
+    <!-- 输入框 -->
+    <input type="number" id="page-number-input" min="1" max="1">
+    <button id="go-to-page-button">跳转</button>
+
+    <select id="page-size-select">
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="20" selected>20</option>
+      <option value="30">30</option>
+      <option value="40">40</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+      <option value="99999">99999</option>
+    </select>
+  </div>
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
+  <script type="module" src="script.js"></script>
+</body>
+</html>
