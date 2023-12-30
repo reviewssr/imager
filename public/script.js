@@ -46,7 +46,7 @@ form.addEventListener('submit', (event) => {
     utils.hideLoading()
     // 处理服务器返回的数据
     if (data.success) {
-      createToast('文件上传成功', 'success');
+      createToast(data.message, 'success');
       console.log("上传结果",data)
       init()
     } else {
@@ -99,7 +99,6 @@ deleteButton.addEventListener('click', () => {
     if (image.classList.contains('selected'))
       imagePaths.push(image.src);
   });
-  console.log('要删除的图片是',imagePaths)
   // 发送删除请求到服务器
   fetch('/delete', {
     method: 'POST',

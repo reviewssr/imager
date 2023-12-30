@@ -120,6 +120,7 @@ main {
   justify-content: center;
   align-items: center;
   display: none;
+  z-index: 99;
 }
 
 #modal-overlay {
@@ -335,7 +336,8 @@ main {
   width: 50px;
   height: 50px;
   margin: -25px 0 0 -25px;
-  border: 5px solid #fff;
+  border: 5px solid #ccc; /* 背景色 */
+  border-top-color: #222; /* 前景色 */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

@@ -4,7 +4,12 @@ const http = require('http');
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const utils = require('./utils')
+
 const app = express();
+const BaseDirectories = [
+  'public/thumbnails',
+  'public/images'
+];
 
 // 设置根目录
 app.use(express.static('public'));
@@ -26,14 +31,14 @@ app.post('/upload', upload.array('image'), async(req, res) => {
   const uploadedFiles = req.files; // 获取上传的文件信息
   // 获取图片列表
   let imageList = uploadedFiles;
-  console.log(0000000000,imageList)
+  console.log('---------------开始上传文件----------------------')
   const compressedImageList = await utils.compressImages(imageList);
-  await utils.buildThumbImages(compressedImageList)
-  // await utils.buildThumbImages(imageList)
+  const successUploaded = await utils.buildThumbImages(compressedImageList);
   const updatedImageList = utils.getImagesList()
+  console.log(`--------本次上传全部完成，成功上传${successUploaded.length}张图片--------`)
   res.json({
     success: true,
-    message: '文件上传成功',
+    message: `成功上传${successUploaded.length}张图片`,
     imageList: updatedImageList
   });
 });
@@ -102,6 +107,15 @@ app.get('/api/images/count', async (req, res) => {
   res.json({
     count: totalImages,
   });
+});
+
+
+// 初始化创建目录
+BaseDirectories.forEach(directory => {
+  if (!fs.existsSync(directory)) {
+    fs.mkdirSync(directory);
+    console.log(`${directory} 目录已创建`);
+  }
 });
 
 // 创建 HTTP 服务器

@@ -1,34 +1,29 @@
 const fs = require('fs')
 const path = require('path');
-const sharp = require('jimp');
+const Jimp = require('jimp');
 
 const imageExtensions = ['.jpg', '.png'];
 // 设置缩略图的宽度和高度
 const thumbnailWidth = 100;
 const thumbnailHeight = 100;
 // 控制图片质量使其不超过指定大小
-const maxFileSize = 800 * 1024; // 800KB
+const maxFileSize = 400 * 1024; // 400KB
 
 // 定义一个函数来删除所有相同的文件
 function deleteDuplicateFiles(directory) {
   // 获取指定目录中的所有文件
   const files = fs.readdirSync(directory);
-  // 创建一个对象来存储文件的 MD5 哈希值
   const fileMD5s = {};
-  // 遍历所有文件
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     // 获取文件的绝对路径
     const file_path = `${directory}/${file}`;
     // 检查文件是否存在
     if (fs.existsSync(file_path)) {
-      // 获取文件的 MD5 哈希值
       const md5 = fs.readFileSync(file_path, 'base64');
-      // 如果文件的 MD5 哈希值已经存在于对象中，则删除该文件
       if (fileMD5s[md5]) {
         fs.unlinkSync(file_path);
       } else {
-        // 如果文件的 MD5 哈希值不存在于对象中，则将该文件的 MD5 哈希值添加到对象中
         fileMD5s[md5] = true;
       }
     }
@@ -68,51 +63,65 @@ const getImages = (page, size) => {
 };
 
 const buildThumbImages = async (imageList) =>{
-  let result = [];
-  for (const file of imageList) {
-    const image = await sharp.read(file.path);
-    await image.resize(thumbnailWidth, thumbnailHeight).write(`public/thumbnails/${file.filename}`);
-    result.push(`thumbnails/${file.filename}`);
+  try {
+    console.log('-----------开始批量处理缩略图-----------')
+    let result = [];
+    for (const file of imageList) {
+      console.log('开始处理缩略图:', file.path)
+      const image = await Jimp.read(file.path);
+      await image.resize(thumbnailWidth, thumbnailHeight).write(`public/thumbnails/${file.filename}`);
+      result.push(`thumbnails/${file.filename}`);
+    }
+    return result;
+  }catch(err) {
+    console.log('处理缩略图失败', err);
   }
-  return result;
 }
 
 const compressImages = async (imageList) => {
-  const compressedImageList = await Promise.all(
-    imageList.map(async (file) => {
-      const fileName = file.filename;
-      const compressedImagePath = `public/images/${path.parse(fileName).name}.jpg`;
-      try {
-        let originImage = await sharp.read(file.path);
-        // 转换为 JPEG 格式并覆盖原始图片
+  const compressedImageList = [];
+  for (const file of imageList) {
+    const fileName = file.filename;
+    const extension = file.path.split('.').pop().toLowerCase();
+    try {
+      let originImage = await Jimp.read(file.path);
+      if (extension !== 'jpg') {
+        const compressedImagePath = `public/images/${path.parse(fileName).name}.jpg`;
         await originImage.quality(100).writeAsync(compressedImagePath);
-        // 删除原始图片
         await deleteFile(file.path);
-        let quality = 100;
-        image = await sharp.read(compressedImagePath);
-        while (image.bitmap.data.length > maxFileSize && quality > 30) {
-          quality -= 5;
-          image.quality(quality);
-        }
-        await image.write(compressedImagePath);
-        file.filename = `${path.parse(fileName).name}.jpg`;
-        file.path = compressedImagePath;
-        return file;
-      } catch (error) {
-        console.error('Error processing image:', fileName, error);
-        return file;
       }
-    })
-  );
+      let quality = 100;
+      let compressedImagePath = `public/images/${path.parse(fileName).name}.jpg`;
+      await originImage.quality(quality).writeAsync(compressedImagePath);
+      let compressedFile = fs.statSync(compressedImagePath);
+
+      while (compressedFile.size > maxFileSize && quality > 20) {
+        quality -= 20;
+        compressedImagePath = `public/images/${path.parse(fileName).name}.jpg`;
+        await originImage.quality(quality).writeAsync(compressedImagePath);
+        compressedFile = fs.statSync(compressedImagePath);
+        console.log('当前处理的质量和文件大小',quality,compressedFile.size)
+      }
+      compressedImageList.push({
+        filename: `${path.parse(fileName).name}.jpg`,
+        path: compressedImagePath,
+      });
+
+    } catch (error) {
+      console.error('图片压缩或转格式时报错:', file.filename, error);
+      compressedImageList.push(file);
+    }
+  }
   return compressedImageList;
 };
+
 async function deleteFile(filePath) {
   try {
     await fs.promises.unlink(filePath);
-    console.log('File deleted successfully:', filePath);
+    console.log('成功删除文件:', filePath);
   } catch (error) {
-    console.error('Error deleting file:', filePath, error);
-    throw error; // 抛出异常，使调用者知道删除文件出错了
+    console.error('删除文件报错:', filePath, error);
+    throw error; 
   }
 }
 
