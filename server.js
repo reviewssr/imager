@@ -28,19 +28,23 @@ const upload = multer({ storage: storage });
 
 // 设置路由
 app.post('/upload', upload.array('image'), async(req, res) => {
-  const uploadedFiles = req.files; // 获取上传的文件信息
-  // 获取图片列表
-  let imageList = uploadedFiles;
-  console.log('---------------开始上传文件----------------------')
-  const compressedImageList = await utils.compressImages(imageList);
-  const successUploaded = await utils.buildThumbImages(compressedImageList);
-  const updatedImageList = utils.getImagesList()
-  console.log(`--------本次上传全部完成，成功上传${successUploaded.length}张图片--------`)
-  res.json({
-    success: true,
-    message: `成功上传${successUploaded.length}张图片`,
-    imageList: updatedImageList
-  });
+  try {
+    const uploadedFiles = req.files; // 获取上传的文件信息
+    // 获取图片列表
+    let imageList = uploadedFiles;
+    console.log('---------------开始上传文件----------------------')
+    const compressedImageList = await utils.compressImages(imageList);
+    const successUploaded = await utils.buildThumbImages(compressedImageList);
+    const updatedImageList = utils.getImagesList()
+    console.log(`--------本次上传全部完成，成功上传${successUploaded&&successUploaded.length}张图片--------`)
+    res.json({
+      success: true,
+      message: `成功上传${successUploaded&&successUploaded.length}张图片`,
+      imageList: updatedImageList
+    });
+  } catch(err) {
+    console.log("上传错误", err)
+  }
 });
 //获取所有图片
 app.get('/getImages', (req, res) => {
